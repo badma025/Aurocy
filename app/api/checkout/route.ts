@@ -4,6 +4,8 @@ import Stripe from "stripe";
 export async function POST(request: Request) {
   try {
     const { stripePriceId, name, price, deckSlug } = await request.json();
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+    const successUrl = `${baseUrl}/success?session_id={CHECKOUT_SESSION_ID}`;
 
     if (!process.env.STRIPE_SECRET_KEY) {
       return NextResponse.json(
@@ -51,13 +53,15 @@ export async function POST(request: Request) {
             },
           ],
       mode: "payment",
-      success_url: `${request.headers.get("origin")}/?success=true`,
+      success_url: successUrl,
       cancel_url: `${request.headers.get("origin")}/?canceled=true`,
       metadata: {
         deckSlug,
         product_name: name,
       },
     });
+
+    console.log("Stripe checkout success_url:", successUrl);
 
     return NextResponse.json({ url: session.url });
   } catch (error: unknown) {

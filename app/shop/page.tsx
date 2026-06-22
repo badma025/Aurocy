@@ -1,5 +1,13 @@
 import { client } from "@/lib/sanity";
-import ShopClient from "./ShopClient";
+import FlashcardsBrowser from "./FlashcardsBrowser";
+
+interface PortableTextChild {
+  text?: string;
+}
+
+interface PortableTextBlock {
+  children?: PortableTextChild[];
+}
 
 interface Deck {
   _id: string;
@@ -7,6 +15,25 @@ interface Deck {
   slug: { current: string };
   price: number;
   mainImage: any;
+  description?: PortableTextBlock[];
+}
+
+interface DeckCard {
+  _id: string;
+  title: string;
+  slug: { current: string };
+  price: number;
+  mainImage: any;
+  descriptionText: string;
+}
+
+function toPlainText(blocks: PortableTextBlock[] = []) {
+  return blocks
+    .flatMap((block) => block.children ?? [])
+    .map((child) => child.text ?? "")
+    .join(" ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 async function getDecks(): Promise<Deck[]> {
@@ -16,7 +43,8 @@ async function getDecks(): Promise<Deck[]> {
       title,
       slug,
       price,
-      mainImage
+      mainImage,
+      description
     }
   `;
   return client.fetch(query);
@@ -24,6 +52,14 @@ async function getDecks(): Promise<Deck[]> {
 
 export default async function Shop() {
   const decks = await getDecks();
+  const deckCards: DeckCard[] = decks.map((deck) => ({
+    _id: deck._id,
+    title: deck.title,
+    slug: deck.slug,
+    price: deck.price,
+    mainImage: deck.mainImage,
+    descriptionText: toPlainText(deck.description),
+  }));
 
   return (
     <div className="min-h-screen bg-[#0B1120] text-white py-20 px-4 sm:px-6 lg:px-8">
@@ -33,7 +69,7 @@ export default async function Shop() {
           <p className="text-xl text-gray-300">Choose your A-Level deck and start studying</p>
         </div>
 
-        <ShopClient decks={decks} />
+        <FlashcardsBrowser decks={deckCards} />
       </div>
     </div>
   );

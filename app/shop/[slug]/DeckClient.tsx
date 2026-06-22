@@ -25,6 +25,21 @@ export default function DeckClient({ deck }: { deck: Deck }) {
   const [flippedIndex, setFlippedIndex] = useState<number | null>(null);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
 
+  const components = {
+    list: {
+      bullet: ({ children }: any) => (
+        <ul className="mt-4 list-disc space-y-2 pl-5 text-white marker:text-white">{children}</ul>
+      ),
+      number: ({ children }: any) => (
+        <ol className="mt-4 list-decimal space-y-2 pl-5 text-white marker:text-white">{children}</ol>
+      ),
+    },
+    listItem: {
+      bullet: ({ children }: any) => <li className="text-sm leading-6 text-white">{children}</li>,
+      number: ({ children }: any) => <li className="text-sm leading-6 text-white">{children}</li>,
+    },
+  };
+
   // Grab the discount from the environment variable (defaults to 0 if undefined)
   const discountPercent = Number(process.env.NEXT_PUBLIC_GLOBAL_DISCOUNT_PERCENT) || 0;
   const isDiscounted = discountPercent > 0;
@@ -81,7 +96,7 @@ export default function DeckClient({ deck }: { deck: Deck }) {
               </div>
             )}
             <div className="prose prose-invert max-w-none">
-              <PortableText value={deck.description} />
+              <PortableText components={components} value={deck.description} />
             </div>
           </div>
 

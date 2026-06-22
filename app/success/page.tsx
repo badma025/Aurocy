@@ -1,37 +1,54 @@
+import { redirect } from "next/navigation";
+import Stripe from "stripe";
 import Link from "next/link";
 
-export default function SuccessPage() {
+// Next.js Server Components can read URL search params directly
+export default async function SuccessPage({
+  searchParams,
+}: {
+  searchParams: { session_id?: string };
+}) {
+  const sessionId = searchParams.session_id;
+
+  // 1. If someone just types /success in the URL, kick them out
+  if (!sessionId) {
+    redirect("/");
+  }
+
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
+
+  try {
+    // 2. Ask Stripe to look up the session ID from the URL
+    const session = await stripe.checkout.sessions.retrieve(sessionId);
+
+    // 3. If they haven't actually paid, kick them out
+    if (session.payment_status !== "paid") {
+      redirect("/");
+    }
+  } catch (error) {
+    // 4. If they typed a fake session ID that Stripe doesn't recognize, kick them out
+    console.error("Invalid session ID:", error);
+    redirect("/");
+  }
+
+  // 5. If they passed all the checks, render the actual Success UI
   return (
-    <section className="min-h-screen bg-[#0B1120] px-4 py-20 text-white sm:px-6 lg:px-8">
-      <div className="mx-auto flex max-w-3xl items-center justify-center">
-        <div className="w-full rounded-3xl border border-white/10 bg-[#111827] p-8 shadow-2xl shadow-black/30 sm:p-12">
-          <div className="mb-6 inline-flex rounded-full border border-emerald-400/30 bg-emerald-400/10 px-4 py-1 text-sm font-medium text-emerald-300">
-            Payment confirmed
-          </div>
-
-          <h1 className="text-4xl font-bold tracking-tight text-white sm:text-5xl">
-            Payment Successful!
-          </h1>
-
-          <p className="mt-6 text-lg text-slate-300">
-            Thank you for your purchase. Your order is complete and your download is on the
-            way.
-          </p>
-
-          <p className="mt-4 text-base text-slate-400 sm:text-lg">
-            Check your inbox (and spam folder) for your flashcard download link.
-          </p>
-
-          <div className="mt-10">
-            <Link
-              href="/shop"
-              className="inline-flex items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold text-[#0B1120] transition hover:bg-slate-200"
-            >
-              Return to Shop
-            </Link>
-          </div>
-        </div>
+    <main className="flex min-h-screen flex-col items-center justify-center bg-[#0B1120] px-4 text-white">
+      <div className="max-w-md text-center">
+        <h1 className="mb-4 text-4xl font-bold text-green-400">
+          Payment Successful!
+        </h1>
+        <p className="mb-8 text-lg text-gray-300">
+          Thank you for your purchase. Your payment has been securely processed. 
+          Please check your inbox (and spam folder) for the email containing your flashcard download link.
+        </p>
+        <Link
+          href="/shop"
+          className="inline-block rounded-md bg-white px-6 py-3 font-semibold text-[#0B1120] transition-colors hover:bg-gray-200"
+        >
+          Return to Shop
+        </Link>
       </div>
-    </section>
+    </main>
   );
 }

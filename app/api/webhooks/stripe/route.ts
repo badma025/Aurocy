@@ -159,15 +159,11 @@ async function sendDeckEmail({
     process.env.RESEND_FROM_EMAIL ?? "Aurocy <onboarding@resend.dev>";
 
   const result = await resend.emails.send({
-    from: fromEmail,
-    to: customerEmail,
-    subject: `Your Aurocy flashcards: ${deckName}`,
-    react: createElement(ReceiptEmail, {
-      customerName,
-      deckName,
-      downloadUrl,
-    }),
-  });
+  from: 'Aurocy <hello@aurocy.com>', // Update this!
+  to: customerEmail,
+  subject: `Your Aurocy Flashcards: ${deckName}`,
+  react: ReceiptEmail({ customerName, deckName, downloadUrl }),
+});
 
   if (result.error) {
     throw new Error(result.error.message);

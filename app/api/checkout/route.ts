@@ -1,10 +1,28 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 
+function resolveBaseUrl(request: Request) {
+  const candidates = [
+    process.env.NEXT_PUBLIC_BASE_URL,
+    request.headers.get("origin"),
+    "http://localhost:3000",
+  ];
+
+  for (const candidate of candidates) {
+    if (!candidate) continue;
+
+    try {
+      return new URL(candidate).origin;
+    } catch {}
+  }
+
+  return "http://localhost:3000";
+}
+
 export async function POST(request: Request) {
   try {
     const { stripePriceId, name, price, deckSlug } = await request.json();
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+    const baseUrl = resolveBaseUrl(request);
     const successUrl = `${baseUrl}/success?session_id={CHECKOUT_SESSION_ID}`;
 
     if (!process.env.STRIPE_SECRET_KEY) {
@@ -54,20 +72,16 @@ export async function POST(request: Request) {
           ],
       mode: "payment",
       success_url: successUrl,
-      cancel_url: `${request.headers.get("origin")}/?canceled=true`,
+      cancel_url: `${baseUrl}/?canceled=true`,
       metadata: {
         deckSlug,
         product_name: name,
       },
     });
 
-    console.log("Stripe checkout success_url:", successUrl);
-
     return NextResponse.json({ url: session.url });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Something went wrong";
-
-    console.error("Stripe error:", error);
 
     return NextResponse.json(
       { error: message },

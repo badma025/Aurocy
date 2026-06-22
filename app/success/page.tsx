@@ -6,9 +6,10 @@ import Link from "next/link";
 export default async function SuccessPage({
   searchParams,
 }: {
-  searchParams: { session_id?: string };
+  searchParams: Promise<{ session_id?: string }>;
 }) {
-  const sessionId = searchParams.session_id;
+  const resolvedSearchParams = await searchParams;
+  const sessionId = resolvedSearchParams.session_id;
 
   // 1. If someone just types /success in the URL, kick them out
   if (!sessionId) {
@@ -27,7 +28,6 @@ export default async function SuccessPage({
     }
   } catch (error) {
     // 4. If they typed a fake session ID that Stripe doesn't recognize, kick them out
-    console.error("Invalid session ID:", error);
     redirect("/");
   }
 

@@ -6,6 +6,10 @@ import { Analytics } from "@vercel/analytics/next"
 export const metadata: Metadata = {
   title: "Aurocy - Anki Flashcard Decks",
   description: "Premium Anki flashcard decks for medical students",
+  icons: {
+    icon: "/aurocy.ico",
+    shortcut: "/aurocy.ico",
+  },
 };
 
 export default function RootLayout({

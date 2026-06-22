@@ -25,9 +25,10 @@ export const ReceiptEmail = ({
 }: ReceiptEmailProps) => {
   return (
     <Html>
-      <Head />
-      <Preview>Your flashcards are ready to download!</Preview>
+      {/* Tailwind must wrap the Head component so it can inject the hover styles! */}
       <Tailwind>
+        <Head />
+        <Preview>Your flashcards are ready to download!</Preview>
         <Body className="bg-gray-50 font-sans">
           <Container className="mx-auto my-[40px] max-w-[600px] rounded-lg border border-gray-200 bg-white p-[40px] shadow-sm">
             {/* Logo / Header Area */}

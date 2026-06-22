@@ -25,51 +25,65 @@ export const ReceiptEmail = ({
 }: ReceiptEmailProps) => {
   return (
     <Html>
-      {/* Tailwind must wrap the Head component so it can inject the hover styles! */}
       <Tailwind>
         <Head />
         <Preview>Your flashcards are ready to download!</Preview>
-        <Body className="bg-gray-50 font-sans">
-          <Container className="mx-auto my-[40px] max-w-[600px] rounded-lg border border-gray-200 bg-white p-[40px] shadow-sm">
-            {/* Logo / Header Area */}
-            <Section className="mb-[32px] text-center">
-              <Heading className="m-0 text-3xl font-bold text-[#0B1120]">
+        <Body className="bg-[#0B1120] py-12 font-sans text-gray-200">
+          <Container className="mx-auto max-w-[560px] rounded-xl border border-gray-800 bg-[#161F30] p-8 shadow-xl">
+            
+            {/* Header/Brand logo */}
+            <Section className="mb-8 text-center border-b border-gray-800 pb-6">
+              <Heading className="m-0 text-2xl font-extrabold tracking-tight text-white">
                 Aurocy
               </Heading>
             </Section>
 
-            {/* Main Content */}
-            <Section className="mb-[32px]">
-              <Text className="text-[16px] leading-[24px] text-gray-700">
+            {/* Content Greeting */}
+            <Section className="mb-6">
+              <Text className="text-[16px] leading-[24px] text-gray-300 font-medium">
                 Hi {customerName},
               </Text>
-              <Text className="text-[16px] leading-[24px] text-gray-700">
-                Thank you for your purchase. Your <strong>{deckName}</strong> flashcard deck is ready to supercharge your revision. 
-              </Text>
-              <Text className="text-[16px] leading-[24px] text-gray-700">
-                Click the button below to download your .apkg file securely. You can import this directly into Anki.
+              <Text className="text-[15px] leading-[24px] text-gray-400 mt-2">
+                Thank you for supporting Aurocy! Your flashcard deck is fully compiled and ready to lock down your active recall.
               </Text>
             </Section>
 
-            {/* CTA Button */}
-            <Section className="mb-[32px] text-center">
+            {/* Product Card Highlight */}
+            <Section className="mb-8 rounded-lg bg-[#0B1120]/50 p-5 border border-gray-800/60">
+              <Text className="m-0 text-[13px] uppercase tracking-wider text-gray-500 font-bold">
+                Item Purchased
+              </Text>
+              <Text className="m-0 mt-1 text-[16px] font-semibold text-white">
+                {deckName} Flashcards
+              </Text>
+              <Text className="m-0 mt-2 text-[14px] text-gray-400 leading-[20px]">
+                Contains a complete `.apkg` collection optimized heavily for spaced repetition.
+              </Text>
+            </Section>
+
+            {/* Action Area */}
+            <Section className="mb-8 text-center">
               <Button
-                className="rounded-md bg-[#0B1120] px-6 py-3 text-center text-[16px] font-semibold text-white no-underline transition-colors hover:bg-gray-800"
+                className="inline-block rounded-lg bg-emerald-500 px-6 py-3.5 text-center text-[15px] font-bold text-[#0B1120] no-underline shadow-md transition-all hover:bg-emerald-400"
                 href={downloadUrl}
               >
-                Download Flashcards
+                Download .apkg File
               </Button>
+              <Text className="text-[12px] text-gray-500 mt-3 block">
+                Link active securely via your account profile.
+              </Text>
             </Section>
 
             {/* Footer */}
-            <Section className="mt-[48px] border-t border-gray-200 pt-[24px]">
-              <Text className="text-[14px] leading-[24px] text-gray-500">
-                Having trouble importing your deck? Reply directly to this email and we'll help you get sorted.
+            <Section className="mt-8 border-t border-gray-800 pt-6">
+              <Text className="m-0 text-[13px] leading-[22px] text-gray-500">
+                Need assistance importing this deck into Anki or have questions about the syllabus coverage? Reply directly to this email and we'll get you sorted.
               </Text>
-              <Text className="text-[12px] leading-[24px] text-gray-400">
+              <Text className="m-0 mt-4 text-[11px] tracking-wide text-gray-600 uppercase font-semibold">
                 © {new Date().getFullYear()} Aurocy. All rights reserved.
               </Text>
             </Section>
+
           </Container>
         </Body>
       </Tailwind>

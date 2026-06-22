@@ -1,4 +1,5 @@
 import { client } from "@/lib/sanity";
+import { withStripePrices } from "@/lib/stripe-server";
 import FlashcardsBrowser from "./FlashcardsBrowser";
 
 interface PortableTextChild {
@@ -13,7 +14,7 @@ interface Deck {
   _id: string;
   title: string;
   slug: { current: string };
-  price: number;
+  stripePriceId: string;
   mainImage: any;
   description?: PortableTextBlock[];
 }
@@ -42,7 +43,7 @@ async function getDecks(): Promise<Deck[]> {
       _id,
       title,
       slug,
-      price,
+      stripePriceId,
       mainImage,
       description
     }
@@ -51,7 +52,7 @@ async function getDecks(): Promise<Deck[]> {
 }
 
 export default async function Shop() {
-  const decks = await getDecks();
+  const decks = await withStripePrices(await getDecks());
   const deckCards: DeckCard[] = decks.map((deck) => ({
     _id: deck._id,
     title: deck.title,

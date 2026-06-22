@@ -25,16 +25,24 @@ export default function DeckClient({ deck }: { deck: Deck }) {
   const [flippedIndex, setFlippedIndex] = useState<number | null>(null);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
 
+  // Grab the discount from the environment variable (defaults to 0 if undefined)
+  const discountPercent = Number(process.env.NEXT_PUBLIC_GLOBAL_DISCOUNT_PERCENT) || 0;
+  const isDiscounted = discountPercent > 0;
+  
+  // Calculate pricing dynamically
+  const basePrice = deck.price / 100;
+  const finalPrice = isDiscounted 
+    ? basePrice * (1 - discountPercent / 100) 
+    : basePrice;
+
   const handleBuyNow = async () => {
     setCheckoutLoading(true);
     try {
       const response = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        // THE FIX: Only send the slug! The backend handles the rest securely.
         body: JSON.stringify({
-          stripePriceId: deck.stripePriceId,
-          name: deck.title,
-          price: deck.price,
           deckSlug: deck.slug.current,
         }),
       });
@@ -80,9 +88,24 @@ export default function DeckClient({ deck }: { deck: Deck }) {
           {/* Right: Pricing & Buy Button */}
           <div>
             <h1 className="text-4xl font-bold mb-4">{deck.title}</h1>
-            <p className="text-4xl font-bold text-blue-400 mb-8">
-              £{(deck.price / 100).toFixed(2)}
-            </p>
+            
+            {/* Updated Pricing UI with Discount Logic */}
+            <div className="mb-8 flex items-end gap-3">
+              {isDiscounted && (
+                <span className="text-2xl font-bold text-slate-500 line-through mb-1">
+                  £{basePrice.toFixed(2)}
+                </span>
+              )}
+              <span className="text-5xl font-bold text-blue-400">
+                £{finalPrice.toFixed(2)}
+              </span>
+              {isDiscounted && (
+                <span className="rounded bg-blue-500/20 px-3 py-1.5 text-sm font-bold text-blue-400 mb-2">
+                  {discountPercent}% OFF
+                </span>
+              )}
+            </div>
+            
             <button
               onClick={handleBuyNow}
               disabled={checkoutLoading}

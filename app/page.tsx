@@ -1,11 +1,12 @@
 import { client } from "@/lib/sanity";
+import { withStripePrices } from "@/lib/stripe-server";
 import HomeClient from "./HomeClient";
 
 interface Deck {
   _id: string;
   title: string;
   slug: { current: string };
-  price: number;
+  stripePriceId: string;
   mainImage: any;
 }
 
@@ -15,7 +16,7 @@ async function getFeaturedDecks(): Promise<Deck[]> {
       _id,
       title,
       slug,
-      price,
+      stripePriceId,
       mainImage
     }
   `;
@@ -23,7 +24,7 @@ async function getFeaturedDecks(): Promise<Deck[]> {
 }
 
 export default async function Home() {
-  const decks = await getFeaturedDecks();
+  const decks = await withStripePrices(await getFeaturedDecks());
 
   return (
     <div className="min-h-screen bg-[#0B1120] text-white">

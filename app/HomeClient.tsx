@@ -14,6 +14,9 @@ interface Deck {
 }
 
 export default function HomeClient({ decks }: { decks: Deck[] }) {
+  const discountPercent = Number(process.env.NEXT_PUBLIC_GLOBAL_DISCOUNT_PERCENT) || 0;
+  const isDiscounted = discountPercent > 0;
+
   // Debug log decks and images
   useEffect(() => {
     console.log("HomeClient: Decks received:", decks);
@@ -76,37 +79,54 @@ export default function HomeClient({ decks }: { decks: Deck[] }) {
         <div className="max-w-6xl mx-auto">
           <h2 className="text-3xl font-bold text-center mb-12">Featured Decks</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {decks.map((deck, index) => (
-              <motion.div
-                key={deck._id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.15 }}
-                whileHover={{ y: -8, scale: 1.02 }}
-              >
-                <Link href={`/shop/${deck.slug.current}`} className="block h-full">
-                  <div className="h-full bg-[#121a2b] border border-gray-700/30 rounded-2xl overflow-hidden">
-                    <div className="relative h-48 overflow-hidden">
-                      {deck.mainImage && (
-                        <img
-                          src={urlFor(deck.mainImage).width(400).height(300).url()}
-                          alt={deck.title}
-                          className="w-full h-full object-cover"
-                        />
-                      )}
-                    </div>
-                    <div className="p-6">
-                      <h3 className="text-xl font-bold mb-2">{deck.title}</h3>
-                      <div className="flex justify-between items-center">
-                        <span className="text-2xl font-bold">
-                          £{(deck.price / 100).toFixed(2)}
-                        </span>
+            {decks.map((deck, index) => {
+              const basePrice = deck.price / 100;
+              const finalPrice = isDiscounted
+                ? basePrice * (1 - discountPercent / 100)
+                : basePrice;
+
+              return (
+                <motion.div
+                  key={deck._id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.15 }}
+                  whileHover={{ y: -8, scale: 1.02 }}
+                >
+                  <Link href={`/shop/${deck.slug.current}`} className="block h-full">
+                    <div className="h-full bg-[#121a2b] border border-gray-700/30 rounded-2xl overflow-hidden">
+                      <div className="relative h-48 overflow-hidden">
+                        {deck.mainImage && (
+                          <img
+                            src={urlFor(deck.mainImage).width(400).height(300).url()}
+                            alt={deck.title}
+                            className="w-full h-full object-cover"
+                          />
+                        )}
+                      </div>
+                      <div className="p-6">
+                        <h3 className="text-xl font-bold mb-2">{deck.title}</h3>
+                        <div className="flex items-center gap-3">
+                          {isDiscounted && (
+                            <span className="text-lg font-medium text-slate-500 line-through">
+                              £{basePrice.toFixed(2)}
+                            </span>
+                          )}
+                          <span className="text-2xl font-bold text-white">
+                            £{finalPrice.toFixed(2)}
+                          </span>
+                          {isDiscounted && (
+                            <span className="rounded bg-blue-500/20 px-2 py-1 text-xs font-bold text-blue-400">
+                              {discountPercent}% OFF
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </Link>
-              </motion.div>
-            ))}
+                  </Link>
+                </motion.div>
+              );
+            })}
           </div>
         </div>
       </section>

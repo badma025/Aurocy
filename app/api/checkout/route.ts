@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import Stripe from "stripe";
+import { client } from "@/lib/sanity";
+import { getStripeUnitAmount, stripe } from "@/lib/stripe-server";
 
 function resolveBaseUrl(request: Request) {
   const candidates = [
@@ -21,28 +22,11 @@ function resolveBaseUrl(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const { stripePriceId, name, price, deckSlug } = await request.json();
+    // We only extract the slug. Never trust the frontend price!
+    const { deckSlug } = await request.json(); 
+    
     const baseUrl = resolveBaseUrl(request);
     const successUrl = `${baseUrl}/success?session_id={CHECKOUT_SESSION_ID}`;
-
-    if (!process.env.STRIPE_SECRET_KEY) {
-      return NextResponse.json(
-        { error: "Stripe secret key not configured - did you restart the dev server?" },
-        { status: 400 }
-      );
-    }
-
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-
-    if (stripePriceId && !stripePriceId.startsWith("price_")) {
-      return NextResponse.json(
-        {
-          error:
-            "Invalid Stripe Price ID! Make sure you're using a Price ID (starts with 'price_'), not a Product ID (starts with 'prod_')!",
-        },
-        { status: 400 }
-      );
-    }
 
     if (!deckSlug || typeof deckSlug !== "string") {
       return NextResponse.json(
@@ -51,38 +35,60 @@ export async function POST(request: Request) {
       );
     }
 
+    // 1. SECURE FETCH: Get the Stripe price ID from Sanity and the display title
+    const deck = await client.fetch(
+      `*[_type == "deck" && slug.current == $deckSlug][0]{ title, stripePriceId }`,
+      { deckSlug }
+    );
+
+    if (!deck) {
+      return NextResponse.json({ error: "Deck not found in database" }, { status: 404 });
+    }
+
+    if (!deck.stripePriceId || typeof deck.stripePriceId !== "string") {
+      return NextResponse.json(
+        { error: "Deck is missing a Stripe price ID in Sanity." },
+        { status: 400 }
+      );
+    }
+
+    const baseUnitAmount = await getStripeUnitAmount(deck.stripePriceId);
+
+    // 2. Apply the global discount mathematically using Stripe as the pricing source
+    const discountPercent = Number(process.env.NEXT_PUBLIC_GLOBAL_DISCOUNT_PERCENT) || 0;
+    
+    const finalPriceInPence = Math.round(baseUnitAmount * (1 - discountPercent / 100));
+
+    // 3. Create the Session
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
-      line_items: stripePriceId
-        ? [
-            {
-              price: stripePriceId,
-              quantity: 1,
+      line_items: [
+        {
+          price_data: {
+            currency: "gbp",
+            product_data: { 
+              name: deck.title,
+              description: discountPercent > 0 ? `Launch Promo: ${discountPercent}% OFF applied` : undefined,
             },
-          ]
-        : [
-            {
-              price_data: {
-                currency: "gbp",
-                product_data: { name },
-                unit_amount: price,
-              },
-              quantity: 1,
-            },
-          ],
+            unit_amount: finalPriceInPence,
+          },
+          quantity: 1,
+        },
+      ],
       mode: "payment",
       success_url: successUrl,
-      cancel_url: `${baseUrl}/?canceled=true`,
+      cancel_url: `${baseUrl}/shop`, // Send them back to the shop if they cancel
       metadata: {
         deckSlug,
-        product_name: name,
+        product_name: deck.title, // Passed for your webhook fulfillment
       },
     });
 
     return NextResponse.json({ url: session.url });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Something went wrong";
-
+    console.error("Checkout Route Error:", message);
+    
     return NextResponse.json(
       { error: message },
       { status: 500 }

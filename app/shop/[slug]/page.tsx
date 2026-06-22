@@ -1,4 +1,5 @@
 import { client } from "@/lib/sanity";
+import { withStripePrice } from "@/lib/stripe-server";
 import DeckClient from "./DeckClient";
 
 interface Flashcard {
@@ -6,24 +7,22 @@ interface Flashcard {
   answer: any;
 }
 
-interface Deck {
+interface SanityDeck {
   _id: string;
   title: string;
   slug: { current: string };
-  price: number;
   stripePriceId: string;
   mainImage: any;
   description: any;
   testSet: Flashcard[];
 }
 
-async function getDeck(slug: string): Promise<Deck> {
+async function getDeck(slug: string): Promise<SanityDeck> {
   const query = `
     *[_type == "deck" && slug.current == $slug][0] {
       _id,
       title,
       slug,
-      price,
       stripePriceId,
       mainImage,
       description,
@@ -34,11 +33,9 @@ async function getDeck(slug: string): Promise<Deck> {
 }
 
 export default async function DeckPage({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params; // Await the params promise!
-  console.log("DeckPage: Slug parameter received:", slug);
+  const { slug } = await params;
   
   const deck = await getDeck(slug);
-  console.log("DeckPage: Fetched deck from Sanity:", deck);
 
   if (!deck) {
     return (
@@ -48,5 +45,5 @@ export default async function DeckPage({ params }: { params: Promise<{ slug: str
     );
   }
 
-  return <DeckClient deck={deck} />;
+  return <DeckClient deck={await withStripePrice(deck)} />;
 }

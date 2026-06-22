@@ -23,12 +23,15 @@ function getExcerpt(text: string, maxLength = 120) {
   if (text.length <= maxLength) {
     return text;
   }
-
   return `${text.slice(0, maxLength).trim()}...`;
 }
 
 export default function FlashcardsBrowser({ decks }: { decks: Deck[] }) {
   const [searchQuery, setSearchQuery] = useState("");
+
+  // Grab the discount from the environment variable (defaults to 0 if undefined)
+  const discountPercent = Number(process.env.NEXT_PUBLIC_GLOBAL_DISCOUNT_PERCENT) || 0;
+  const isDiscounted = discountPercent > 0;
 
   const filteredDecks = useMemo(() => {
     const query = normalizeSearchValue(searchQuery);
@@ -76,42 +79,64 @@ export default function FlashcardsBrowser({ decks }: { decks: Deck[] }) {
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-          {filteredDecks.map((deck, index) => (
-            <motion.div
-              key={deck._id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.08 }}
-              whileHover={{ y: -4 }}
-            >
-              <Link href={`/shop/${deck.slug.current}`} className="block h-full">
-                <div className="h-full overflow-hidden rounded-2xl border border-gray-700/30 bg-[#121a2b]">
-                  <div className="relative h-48 overflow-hidden">
-                    {deck.mainImage && (
-                      <img
-                        src={urlFor(deck.mainImage).width(400).height(300).url()}
-                        alt={deck.title}
-                        className="h-full w-full object-cover"
-                      />
-                    )}
-                  </div>
-                  <div className="p-6">
-                    <h3 className="mb-2 text-xl font-bold">{deck.title}</h3>
-                    <p className="mb-5 min-h-[3.75rem] text-sm leading-6 text-slate-400">
-                      {deck.descriptionText
-                        ? getExcerpt(deck.descriptionText)
-                        : "Premium A-Level flashcards built for fast, focused revision."}
-                    </p>
-                    <div className="flex items-center justify-between">
-                      <span className="text-2xl font-bold">
-                        £{(deck.price / 100).toFixed(2)}
-                      </span>
+          {filteredDecks.map((deck, index) => {
+            // Calculate pricing dynamically for each deck
+            const basePrice = deck.price / 100;
+            const finalPrice = isDiscounted 
+              ? basePrice * (1 - discountPercent / 100) 
+              : basePrice;
+
+            return (
+              <motion.div
+                key={deck._id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.08 }}
+                whileHover={{ y: -4 }}
+              >
+                <Link href={`/shop/${deck.slug.current}`} className="block h-full">
+                  <div className="h-full overflow-hidden rounded-2xl border border-gray-700/30 bg-[#121a2b]">
+                    <div className="relative h-48 overflow-hidden">
+                      {deck.mainImage && (
+                        <img
+                          src={urlFor(deck.mainImage).width(400).height(300).url()}
+                          alt={deck.title}
+                          className="h-full w-full object-cover"
+                        />
+                      )}
+                    </div>
+                    <div className="p-6">
+                      <h3 className="mb-2 text-xl font-bold">{deck.title}</h3>
+                      <p className="mb-5 min-h-[3.75rem] text-sm leading-6 text-slate-400">
+                        {deck.descriptionText
+                          ? getExcerpt(deck.descriptionText)
+                          : "Premium A-Level flashcards built for fast, focused revision."}
+                      </p>
+                      
+                      {/* Updated Pricing UI */}
+                      <div className="flex items-center gap-3">
+                        {isDiscounted && (
+                          <span className="text-lg font-medium text-slate-500 line-through">
+                            £{basePrice.toFixed(2)}
+                          </span>
+                        )}
+                        <span className="text-2xl font-bold text-white">
+                          £{finalPrice.toFixed(2)}
+                        </span>
+                        {isDiscounted && (
+                          <span className="rounded bg-blue-500/20 px-2 py-1 text-xs font-bold text-blue-400">
+                            {discountPercent}% OFF
+                          </span>
+                        )}
+                      </div>
+                      {/* End Updated Pricing UI */}
+
                     </div>
                   </div>
-                </div>
-              </Link>
-            </motion.div>
-          ))}
+                </Link>
+              </motion.div>
+            );
+          })}
         </div>
       )}
     </div>

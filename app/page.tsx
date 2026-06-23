@@ -3,6 +3,8 @@ import { withStripePrices } from "@/lib/stripe-server";
 import TestimonialsSection from "@/components/testimonials-section";
 import HomeClient from "./HomeClient";
 
+export const revalidate = 60;
+
 const featuredDeckSlugs = [
   "aqa-a-level-physics",
   "edexcel-a-level-further-maths",
@@ -28,7 +30,11 @@ async function getFeaturedDecks(): Promise<Deck[]> {
     }
   `;
 
-  const decks = await client.fetch<Deck[]>(query, { featuredSlugs: featuredDeckSlugs });
+  const decks = await client.fetch<Deck[]>(
+    query,
+    { featuredSlugs: featuredDeckSlugs },
+    { next: { revalidate: 60 } },
+  );
 
   return featuredDeckSlugs
     .map((slug) => decks.find((deck) => deck.slug.current === slug))

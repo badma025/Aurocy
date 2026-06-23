@@ -2,6 +2,8 @@ import { client } from "@/lib/sanity";
 import { withStripePrice } from "@/lib/stripe-server";
 import DeckClient from "./DeckClient";
 
+export const revalidate = 60;
+
 interface Flashcard {
   question: string;
   answer: any;
@@ -29,7 +31,7 @@ async function getDeck(slug: string): Promise<SanityDeck> {
       testSet
     }
   `;
-  return client.fetch(query, { slug });
+  return client.fetch<SanityDeck>(query, { slug }, { next: { revalidate: 60 } });
 }
 
 export default async function DeckPage({ params }: { params: Promise<{ slug: string }> }) {

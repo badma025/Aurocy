@@ -2,6 +2,8 @@ import { client } from "@/lib/sanity";
 import { withStripePrices } from "@/lib/stripe-server";
 import FlashcardsBrowser from "./FlashcardsBrowser";
 
+export const revalidate = 60;
+
 interface PortableTextChild {
   text?: string;
 }
@@ -48,7 +50,7 @@ async function getDecks(): Promise<Deck[]> {
       description
     }
   `;
-  return client.fetch(query);
+  return client.fetch<Deck[]>(query, {}, { next: { revalidate: 60 } });
 }
 
 export default async function Shop() {

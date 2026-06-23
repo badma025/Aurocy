@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { client, urlFor } from "@/lib/sanity";
 
+export const revalidate = 60;
+
 interface Post {
   _id: string;
   title: string;
@@ -20,7 +22,7 @@ async function getPosts() {
       publishedAt
     }
   `;
-  return client.fetch<Post[]>(query);
+  return client.fetch<Post[]>(query, {}, { next: { revalidate: 60 } });
 }
 
 export default async function Blog() {
@@ -59,4 +61,3 @@ export default async function Blog() {
     </div>
   );
 }
-

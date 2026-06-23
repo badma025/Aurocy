@@ -5,6 +5,8 @@ import { PortableText } from "@portabletext/react";
 import BlogLikeButton from "./BlogLikeButton";
 import CodeBlock from "./CodeBlock";
 
+export const revalidate = 60;
+
 function isPortableTextBlock(block: any) {
   return !!block && block._type === "block" && Array.isArray(block.children);
 }
@@ -246,7 +248,9 @@ async function getPost(slug: string) {
       "likes": coalesce(likes, 0)
     }
   `;
-  return client.withConfig({ useCdn: false }).fetch<Post>(query, { slug });
+  return client
+    .withConfig({ useCdn: false })
+    .fetch<Post>(query, { slug }, { next: { revalidate: 60 } });
 }
 
 async function getCanonicalPostSlug(requestedSlug: string) {
@@ -256,7 +260,9 @@ async function getCanonicalPostSlug(requestedSlug: string) {
     }
   `;
 
-  const slugs = await client.withConfig({ useCdn: false }).fetch<Array<{ slug: string }>>(query);
+  const slugs = await client
+    .withConfig({ useCdn: false })
+    .fetch<Array<{ slug: string }>>(query, {}, { next: { revalidate: 60 } });
   const target = normalizeSlug(requestedSlug);
 
   const match = slugs.find((entry) => normalizeSlug(entry.slug) === target);

@@ -16,6 +16,8 @@ interface Deck {
 export default function HomeClient({ decks }: { decks: Deck[] }) {
   const discountPercent = Number(process.env.NEXT_PUBLIC_GLOBAL_DISCOUNT_PERCENT) || 0;
   const isDiscounted = discountPercent > 0;
+  const saleEndsAt = new Date("2026-09-01T00:00:00.000Z");
+  const showPromoBanner = new Date() < saleEndsAt;
 
   // Debug log decks and images
   useEffect(() => {
@@ -29,6 +31,16 @@ export default function HomeClient({ decks }: { decks: Deck[] }) {
   }, [decks]);
   return (
     <>
+      {showPromoBanner && (
+        <section className="border-b border-blue-500/20 bg-gradient-to-r from-blue-600/10 via-slate-900/80 to-blue-600/10 px-4 py-3 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-6xl text-center">
+            <p className="text-sm font-medium tracking-[0.02em] text-blue-300 sm:text-base">
+              ☀️ 40% Summer Sale for Year 10 & Year 12 students — ends September 1st!
+            </p>
+          </div>
+        </section>
+      )}
+
       {/* Hero Section */}
       <section className="py-24 px-4 sm:px-6 lg:px-8">
         <div className="max-w-5xl mx-auto text-center">
